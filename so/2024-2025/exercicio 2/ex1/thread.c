@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h> // for sleep
+
 
 
 int Value = 0;
@@ -40,6 +42,7 @@ int main()
       return -1;
    }
    
+   sleep(1); // sleep for 1 second
    Value = 2;
    
    if(pthread_join(tid, NULL) != 0) { //o pthread_join espera a thread terminar ou seja é parecido ao wait
@@ -50,3 +53,6 @@ int main()
    printf("Value=%d\n",Value);
    return 0;
 }
+
+
+//pode ser 1 ou 2 porque o valor depende do  escalanador do sistema operacional
