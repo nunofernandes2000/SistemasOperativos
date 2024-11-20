@@ -1,5 +1,9 @@
 /*
  * counter.c - synchronized counter with even and odd threads
+ *
+ * Este programa cria duas threads que incrementam uma variável global Counter.
+ * Uma thread incrementa o Counter quando ele é par e a outra quando ele é ímpar.
+ * O acesso à variável Counter é protegido por um mutex para evitar condições de corrida.
  */
 
 #include <stdio.h>

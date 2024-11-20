@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        "pthread.h": "c",
+        "stdlib.h": "c"
+    }
+}
