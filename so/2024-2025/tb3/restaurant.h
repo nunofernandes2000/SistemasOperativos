@@ -3,6 +3,8 @@
 
 #define NUMBER_OF_DISHES 5
 
+#define PEDIDOS_ESPERA 20
+
 typedef struct {
     char *name;
     int preparation_time;
@@ -23,5 +25,11 @@ typedef struct {
     int pid; /* pid of the client */
     int dish; /* dish to prepare (numero do prato, corresponde ao indice do array)*/
 }REQUEST;
+
+
+//estrutura para memmoria partilhada --sizeof(ESTRUTURA) * PEDIDOS_ESPERA
+//pid 
+//prato
+//status
 
 #endif 

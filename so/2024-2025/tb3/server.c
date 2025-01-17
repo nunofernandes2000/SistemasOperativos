@@ -18,6 +18,9 @@ int main(int argc, char *argv[]) {
     // connect to the message queue
     msg_id = msgget(1000, 0600 | IPC_CREAT);
     exit_on_error(msg_id, "Creation/Connection");
+    //criar memoria partilhada
+    //criar mutexes
+    //criar semaforos
 
     printf("Server ready\n");
 
@@ -31,6 +34,10 @@ int main(int argc, char *argv[]) {
         else {
             printf("Request received from client %d: %d - %s\n", request.pid, request.dish, dishes[request.dish].name);
             send_notification(msg_id, request.pid, REQUESTED); // avisa o cliente que o pedido chegou-la
+
+            //escrever(procurar um que estteja livre(status = -1000 por exemplo)) e fazer up
+            //atualizar o status 
+
 
             // o codigo tem que ser alterado
             sleep(dishes[request.dish].preparation_time);
