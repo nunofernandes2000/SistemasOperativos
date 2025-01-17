@@ -12,7 +12,7 @@ typedef struct {
 
 
 DISHES dishes[NUMBER_OF_DISHES] = {
-    {"Pica-pau", 3},
+    {"PICA-PAU", 3},
     {"Francesinha", 5},
     {"Punheta de bacalhau", 4},
     {"Miojo", 2},
