@@ -14,7 +14,7 @@ typedef struct {
 DISHES dishes[NUMBER_OF_DISHES] = {
     {"Pica-pau", 3},
     {"Francesinha", 5},
-    {"Punheta de bacalhau", 1},
+    {"Punheta de bacalhau", 4},
     {"Miojo", 2},
     {"Peixe cru", 1}
 };
@@ -27,9 +27,11 @@ typedef struct {
 }REQUEST;
 
 
-//estrutura para memmoria partilhada --sizeof(ESTRUTURA) * PEDIDOS_ESPERA
-//pid 
-//prato
-//status
+typedef struct {
+    int pid; /* pid of the client */
+    int dish; /* dish to prepare (numero do prato, corresponde ao */
+    int status;
+} ORDER;
+
 
 #endif 

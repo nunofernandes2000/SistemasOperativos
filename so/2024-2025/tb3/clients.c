@@ -13,7 +13,7 @@
 int msg_id;
 
 int generate_random(int min_value, int max_value) {
-    return min_value + (rand() % (max_value - min_value));
+    return min_value + (rand() % (max_value - min_value + 1));
 }
 
 void client() {
@@ -25,16 +25,13 @@ void client() {
     request.pid = getpid();
     request.dish = generate_random(0, NUMBER_OF_DISHES - 1);
 
-    printf("New client %d request %d - %s\n", getpid(), dishes[request.dish].name);
+    printf("New client %d request %d - %s\n", getpid(), request.dish, dishes[request.dish].name);
 
-    /* send request to server */
     status = msgsnd(msg_id, &request, sizeof(request) - sizeof(long), 0);
     exit_on_error(status, "Send");
 
-    /* wait until the request is ready */
     while (1) {
-        /* receive notification from server or cooks */
-        status = msgrcv(msg_id, &notification, sizeof(notification) - sizeof(long), getpid(), 0); // 0 -> bloqueante
+        status = msgrcv(msg_id, &notification, sizeof(notification) - sizeof(long), getpid(), 0);
         exit_on_error(status, "Answer");
 
         printf("[%05d] Status changed: %d\n", getpid(), notification.status);
@@ -47,17 +44,13 @@ void client() {
 int main( int argc, char *argv[]) {
     srand(time(NULL));
 
-    // connect with the message queue
     msg_id = msgget(1000, 0600 | IPC_CREAT);
     exit_on_error(msg_id, "Creation/Connection");
 
     while(1) {
-        /* create a new client */
-        if(fork())
+        if(fork() == 0)
             client();
-
         else
-            /* wait for the next client */
             sleep(generate_random(3, 15));
     }
 }
