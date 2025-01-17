@@ -5,68 +5,54 @@
 #include <time.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <sys/shm.h>
 #include "restaurant.h"
 #include "notification.h"
-#include "semaphore.h"
 
 #define exit_on_error(s, m) if (s < 0) { perror(m); exit(1); }
 
-int main(int argc, char *argv[]) {
-    int msg_id;
-    int status;
-    REQUEST request;
+int msg_id;
 
-    // connect to the message queue
+int generate_random(int min_value, int max_value) {
+    return min_value + (rand() % (max_value - min_value + 1));
+}
+
+void client() {
+    REQUEST request;
+    NOTIFICATION_STATUS notification;
+    int status;
+
+    request.type = 1;
+    request.pid = getpid();
+    request.dish = generate_random(0, NUMBER_OF_DISHES - 1);
+
+    printf("New client %d request %d - %s\n", getpid(), request.dish, dishes[request.dish].name);
+
+    status = msgsnd(msg_id, &request, sizeof(request) - sizeof(long), 0);
+    exit_on_error(status, "Send");
+
+    while (1) {
+        status = msgrcv(msg_id, &notification, sizeof(notification) - sizeof(long), getpid(), 0);
+        exit_on_error(status, "Answer");
+
+        printf("[%05d] Status changed: %d\n", getpid(), notification.status);
+
+        if (notification.status == READY || notification.status == INVALID_DISH)
+            return;
+    }
+}
+
+int main( int argc, char *argv[]) {
+    srand(time(NULL));
+
     msg_id = msgget(1000, 0600 | IPC_CREAT);
     exit_on_error(msg_id, "Creation/Connection");
 
-    // create shared memory
-    int shared_memory_id = shmget(1001, sizeof(int) * NUMBER_OF_DISHES, 0600 | IPC_CREAT);
-    int* dish_status = (int*)shmat(shared_memory_id, NULL, 0);
-    for(int i = 0; i < NUMBER_OF_DISHES; i++) {
-        dish_status[i] = 0; // set all dishes as available
-    }
-    shmdt(dish_status); // detach the shared memory segment
-
-    // create mutexes
-    int mutex_id = create_mutex(0);
-    // create semaphores
-    int pedidos_espera_id = create_semaphore(PEDIDOS_ESPERA);
-
-    printf("Server ready\n");
-
     while(1) {
-        // receive requests from clients
-        status = msgrcv(msg_id, &request, sizeof(request) - sizeof(long), 1, 0);
-        exit_on_error(status, "Reception");
-        if(request.dish < 0 || request.dish >= NUMBER_OF_DISHES) {
-            send_notification(msg_id, request.pid , INVALID_DISH);
-        }
-        else {
-            printf("Request received from client %d: %d - %s\n", request.pid, request.dish, dishes[request.dish].name);
-            send_notification(msg_id, request.pid, REQUESTED); // notify the client that the request has been received
-
-            down(mutex_id); // lock mutex
-            dish_status = (int*)shmat(shared_memory_id, NULL, 0);
-            int assigned = 0;
-            for (int i = 0; i < NUMBER_OF_DISHES; i++) {
-                if (dish_status[i] == 0) {
-                    dish_status[i] = request.pid;
-                    assigned = 1;
-                    break;
-                }
-            }
-            shmdt(dish_status);
-            up(mutex_id); // unlock mutex
-
-            if (assigned) {
-                up(pedidos_espera_id); // release a request to be prepared
-                printf("Request of client %d READY: %d - %s\n", request.pid, request.dish, dishes[request.dish].name);
-                send_notification(msg_id, request.pid, READY);
-            } else {
-                printf("No available slot for client %d request %d - %s\n", request.pid, request.dish, dishes[request.dish].name);
-            }
+        if(fork() == 0) {
+            client();
+            exit(0); // Certifique-se de que o processo filho termine após a execução do cliente
+        } else {
+            sleep(generate_random(3, 15));
         }
     }
 }

@@ -14,13 +14,14 @@
 #define exit_on_error(s, m) if (s < 0) { perror(m); exit(1); }
 #define NUM_COOKS 3
 
+
 void cook_process() {
     int msg_id = msgget(1000, 0600 | IPC_CREAT);
     exit_on_error(msg_id, "msgget");
-    int shared_memory_id = shmget(1001, sizeof(int) * NUMBER_OF_DISHES, 0600 | IPC_CREAT);
+    int shared_memory_id = shmget(1001, sizeof(SharedDish) * NUMBER_OF_DISHES, 0600 | IPC_CREAT);
     exit_on_error(shared_memory_id, "shmget");
-    int* dish_status = (int*)shmat(shared_memory_id, NULL, 0);
-    if (dish_status == (void*) -1) {
+    SharedDish* dish_status = (SharedDish*)shmat(shared_memory_id, NULL, 0);
+    if (dish_status == (void*)-1) {
         perror("shmat");
         exit(1);
     }
@@ -32,7 +33,7 @@ void cook_process() {
 
     printf("Cook %d started\n", pid); // Adicionando mensagem de depuração
 
-    while(1) {
+    while (1) {
         printf("Cook %d waiting for a request\n", pid); // Adicionando mensagem de depuração
         down(pedidos_espera_id);
         // Lock the shared memory
@@ -40,9 +41,9 @@ void cook_process() {
         int dish = -1;
         int client_id = -1;
         for (int i = 0; i < NUMBER_OF_DISHES; i++) {
-            if (dish_status[i] != 0) {
-                dish = i;
-                client_id = dish_status[i];
+            if (dish_status[i].client_id != 0) {
+                dish = dish_status[i].dish;
+                client_id = dish_status[i].client_id;
                 break;
             }
         }
@@ -60,7 +61,13 @@ void cook_process() {
 
         // Update the shared memory
         down(mutex_id); // lock mutex
-        dish_status[dish] = 0;
+        for (int i = 0; i < NUMBER_OF_DISHES; i++) {
+            if (dish_status[i].client_id == client_id) {
+                dish_status[i].client_id = 0;
+                dish_status[i].dish = -1;
+                break;
+            }
+        }
         up(mutex_id); // unlock mutex
 
         printf("Cook %d finished preparing dish %s for client %d\n", pid, dishes[dish].name, client_id);
@@ -69,7 +76,7 @@ void cook_process() {
 }
 
 int main(int argc, char *argv[]) {
-    for(int i = 0; i < NUM_COOKS; i++){
+    for (int i = 0; i < NUM_COOKS; i++) {
         pid_t pid = fork();
         if (pid == 0) {
             // Processo filho
@@ -82,7 +89,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Processo pai espera que todos os filhos terminem
-    for(int i = 0; i < NUM_COOKS; i++){
+    for (int i = 0; i < NUM_COOKS; i++) {
         wait(NULL);
     }
 

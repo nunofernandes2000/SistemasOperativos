@@ -3,7 +3,7 @@
 
 #define NUMBER_OF_DISHES 5
 
-#define PEDIDOS_ESPERA 20
+#define PEDIDOS_ESPERA 100
 
 typedef struct {
     char *name;
@@ -12,11 +12,11 @@ typedef struct {
 
 
 DISHES dishes[NUMBER_OF_DISHES] = {
-    {"PICA-PAU", 3},
+    {"Tripas de porco", 3},
     {"Francesinha", 5},
-    {"Punheta de bacalhau", 4},
+    {"Bife da vazia", 4},
     {"Miojo", 2},
-    {"Peixe cru", 1}
+    {"Sushi", 1}
 };
 
 /* structure of a request from a client to central server */
@@ -28,10 +28,10 @@ typedef struct {
 
 
 typedef struct {
-    int pid; /* pid of the client */
-    int dish; /* dish to prepare (numero do prato, corresponde ao */
-    int status;
-} ORDER;
+    int client_id; // ID do cliente
+    int dish;      // Prato solicitado
+} SharedDish;
+
 
 
 #endif 
