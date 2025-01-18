@@ -8,8 +8,8 @@
 #include "restaurant.h"
 #include "notification.h"
 #include "semaphore.h"
-#include <sys/shm.h> //shared memory
-#include <sys/wait.h> // for wait
+#include <sys/shm.h> //memoria partilhada include
+#include <sys/wait.h>
 
 #define exit_on_error(s, m) if (s < 0) { perror(m); exit(1); }
 #define NUM_COOKS 3
@@ -21,25 +21,29 @@ void cook_process() {
     int shared_memory_id = shmget(1001, sizeof(SharedDish) * NUMBER_OF_DISHES, 0600 | IPC_CREAT);
     exit_on_error(shared_memory_id, "shmget");
     SharedDish* dish_status = (SharedDish*)shmat(shared_memory_id, NULL, 0);
+    // Verificar se houve erro
     if (dish_status == (void*)-1) {
         perror("shmat");
         exit(1);
     }
     int pid = getpid();
+    //gerador de numeros aleatorios
     srand(time(NULL) ^ (pid << 16));
 
     int mutex_id = create_mutex(0); // Obter o identificador do mutex
     int pedidos_espera_id = create_semaphore(PEDIDOS_ESPERA); // Obter o identificador do semáforo de pedidos
 
-    printf("Cook %d started\n", pid); // Adicionando mensagem de depuração
+    printf("Cook %d started\n", pid);
 
     while (1) {
-        printf("Cook %d waiting for a request\n", pid); // Adicionando mensagem de depuração
+        printf("Cook %d waiting for a request\n", pid);
         down(pedidos_espera_id);
-        // Lock the shared memory
+        printf("Cook %d received a request\n", pid);
         down(mutex_id); // lock mutex
-        int dish = -1;
-        int client_id = -1;
+
+        int dish = -1; // é inicializada a -1 para indicar que nenhum prato foi encontrado ainda
+        int client_id = -1; // é inicializada a -1 para indicar que nenhum cliente foi encontrado ainda
+        // Encontra um prato e um cliente com pedido
         for (int i = 0; i < NUMBER_OF_DISHES; i++) {
             if (dish_status[i].client_id != 0) {
                 dish = dish_status[i].dish;
@@ -59,7 +63,6 @@ void cook_process() {
         sleep(dishes[dish].preparation_time);
         send_notification(msg_id, client_id, READY);
 
-        // Update the shared memory
         down(mutex_id); // lock mutex
         for (int i = 0; i < NUMBER_OF_DISHES; i++) {
             if (dish_status[i].client_id == client_id) {

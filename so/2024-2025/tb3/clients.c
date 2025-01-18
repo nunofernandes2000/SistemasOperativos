@@ -34,7 +34,8 @@ void client() {
         status = msgrcv(msg_id, &notification, sizeof(notification) - sizeof(long), getpid(), 0);
         exit_on_error(status, "Answer");
 
-        printf("[%05d] Status changed: %d\n", getpid(), notification.status);
+        printf("[%05d] Status changed: %d\n", getpid(), notification.status); // envia notificação do status do pedido
+        
 
         if (notification.status == READY || notification.status == INVALID_DISH)
             return;
@@ -49,8 +50,9 @@ int main( int argc, char *argv[]) {
 
     while(1) {
         if(fork() == 0) {
+            // Processo filho
             client();
-            exit(0); // Certifique-se de que o processo filho termine após a execução do cliente
+            exit(0);
         } else {
             sleep(generate_random(3, 15));
         }

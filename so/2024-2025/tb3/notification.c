@@ -7,6 +7,6 @@ void send_notification(int msg_id, int pid, int status) {
 
     notification.type = pid;
     notification.status = status;
-    status = msgsnd(msg_id, &notification, sizeof(notification) - sizeof(long), 0); // message send
-    // tammanho da estrutura - o type (sizeof(notification) - sizeof(long))
+    status = msgsnd(msg_id, &notification, sizeof(notification) - sizeof(long), 0);
+    
 }
